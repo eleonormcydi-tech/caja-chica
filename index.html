@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1F3A5F">
+<title>Caja Chica</title>
+<style>
+:root{--navy:#1F3A5F;--gold:#B8862B;--bg:#F3F5F8;--ink:#222;--mut:#6b7280;--line:#dde2ea;--ok:#1b7f4b;--warn:#b45309;--bad:#b91c1c}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+header{background:var(--navy);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+header b{font-size:17px} header small{opacity:.8;display:block;font-size:11px}
+header button{background:transparent;border:1px solid #fff6;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer}
+nav{display:flex;background:#fff;border-bottom:2px solid var(--gold);overflow-x:auto}
+nav a{padding:12px 14px;color:var(--navy);text-decoration:none;font-weight:600;white-space:nowrap}
+nav a.on{border-bottom:3px solid var(--gold);margin-bottom:-2px}
+nav .badge{background:var(--bad);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px}
+main{max-width:900px;margin:0 auto;padding:14px}
+footer{text-align:center;color:var(--mut);font-size:11px;padding:20px}
+h2{color:var(--navy);margin:6px 0 12px;font-size:20px} h3{color:var(--navy);margin:18px 0 8px;font-size:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center} .between{justify-content:space-between}
+.mut{color:var(--mut);font-size:13px}
+.chip{display:inline-block;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.chip.b{background:#dbeafe;color:#1e40af}.chip.a{background:#fef3c7;color:#92400e}.chip.o{background:#ffedd5;color:#9a3412}
+.chip.r{background:#fee2e2;color:#991b1b}.chip.p{background:#ede9fe;color:#5b21b6}.chip.g{background:#dcfce7;color:#166534}.chip.n{background:#e5e7eb;color:#374151}
+.bar{height:10px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;background:var(--ok)} .bar.w i{background:#d97706} .bar.d i{background:var(--bad)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.kpis div{background:var(--bg);border-radius:8px;padding:8px;text-align:center}
+.kpis b{display:block;font-size:17px;color:var(--navy)} .kpis span{font-size:11px;color:var(--mut)}
+.alert{background:#FFF7E0;border-left:4px solid var(--gold);padding:9px 12px;border-radius:4px;margin:8px 0;font-size:14px}
+.alert.bad{background:#fee2e2;border-color:var(--bad)}
+button,.btn{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;background:var(--navy);color:#fff;text-decoration:none;display:inline-block}
+button.gold,.btn.gold{background:var(--gold)} button.ghost,.btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+button.red{background:var(--bad)} button.orange{background:#d97706} button.green{background:var(--ok)}
+button:disabled{opacity:.5;cursor:wait} button.sm{padding:5px 10px;font-size:13px}
+label{display:block;font-weight:600;margin:12px 0 4px;font-size:14px}
+input,select,textarea{width:100%;font:inherit;padding:10px;border:1px solid #c5ccd8;border-radius:8px;background:#fff}
+input[readonly]{background:#eef1f5} textarea{min-height:70px}
+input[type=checkbox]{width:auto;transform:scale(1.3)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px} @media(max-width:560px){.grid2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:13px} th{background:var(--navy);color:#fff;text-align:left;padding:7px} td{padding:7px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap} .tw{overflow-x:auto}
+.li{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+.li:last-child{border:0} .li.act{background:#FFF7E0;margin:0 -14px;padding:10px 14px}
+.tl{border-left:3px solid var(--line);margin-left:6px;padding-left:12px} .tl div{margin-bottom:10px;font-size:13px}
+.login{max-width:380px;margin:60px auto;text-align:center} .login #gbtn{display:flex;justify-content:center;margin-top:16px}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:8px;max-width:90%;display:none;z-index:9}
+#toast.bad{background:var(--bad)} #toast.ok{background:var(--ok)}
+.mono{font-family:ui-monospace,Consolas,monospace} .right{text-align:right}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+
+<script>
+/* ====== CONFIGURACIÓN: pegar aquí la URL del Web App ====== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbyEzfxrZg5LZTLncTnbJQ1flc83QY52rRXsLjSjGTIqlj7xcL_o2spCpcp5UOOuxg/exec';
+/* ========================================================== */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const r2 = n => Math.round((Number(n) + 1e-9) * 100) / 100;
+const hoy = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const CHIP = { 'Revisión contable': 'b', 'Pendiente de autorización': 'a', 'Observada': 'o', 'Denegada': 'r', 'Aprobada - pendiente Odoo': 'p', 'Registrada en Odoo': 'g',
+  'Activo': 'g', 'Solicitado': 'b', 'En liquidación': 'a', 'Liquidado': 'n', 'Denegado': 'r', 'Registrado': 'b', 'En reintegro': 'a', 'Reintegrado': 'g' };
+const chip = t => `<span class="chip ${CHIP[t] || 'n'}">${esc(t)}</span>`;
+
+let S = { token: localStorage.getItem('cc_token'), boot: null, loginEmail: '' };
+const rol = r => S.boot && S.boot.user.roles.includes(r.toLowerCase());
+
+/* ---------- utilidades de UI ---------- */
+function toast(msg, tipo) { const t = $('#toast'); t.textContent = msg; t.className = tipo || ''; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', tipo === 'bad' ? 6000 : 3000); }
+async function llamar(body) {
+  try { const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(body) }); return await r.json(); }
+  catch (e) { throw { code: 'RED', error: 'No se pudo conectar con el servidor. Revisa tu conexión.' }; }
+}
+async function api(action, payload) {
+  if (!S.token) throw { code: 'NO_AUTH', error: 'Inicia sesión.' };
+  const j = await llamar({ token: S.token, action, payload: payload || {} });
+  if (!j.ok) { if (j.code === 'TOKEN_EXPIRED' || j.code === 'NO_AUTH') { logout(j.error); } throw j; }
+  return j.data;
+}
+async function pub(action, payload) { const j = await llamar({ action, payload: payload || {} }); if (!j.ok) throw j; return j.data; }
+async function verArchivo(id, kind) {
+  const w = window.open('', '_blank');
+  try {
+    const f = await api('getArchivo', { id, kind });
+    const bin = atob(f.base64), arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([arr], { type: f.mime }));
+    if (w) w.location = url; else location.href = url;
+  } catch (e) { if (w) w.close(); toast(e.error || e.message || 'No se pudo abrir el archivo', 'bad'); }
+}
+async function accion(btn, fn) {
+  if (btn) btn.disabled = true;
+  try { await fn(); } catch (e) { toast(e.error || e.message || 'Error', 'bad'); } finally { if (btn) btn.disabled = false; }
+}
+const toB64 = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(f); });
+async function leerArchivo(file) {
+  if (!file) return null;
+  if (file.type === 'application/pdf') { if (file.size > 6e6) throw { error: 'El PDF supera 6 MB.' }; return { mime: file.type, base64: await toB64(file) }; }
+  if (!file.type.startsWith('image/')) throw { error: 'Usa una foto (JPG/PNG) o un PDF.' };
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return { mime: 'image/jpeg', base64: c.toDataURL('image/jpeg', 0.8).split(',')[1] };
+}
+function csv(nombre, filas) {
+  const cel = v => { v = String(v == null ? '' : v); if (/^[=+\-@]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; };
+  const blob = new Blob(['﻿' + filas.map(f => f.map(cel).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre; a.click();
+}
+
+/* ---------- sesión ---------- */
+function logout(msg, remoto) {
+  const t = S.token; S.token = null; S.boot = null; localStorage.removeItem('cc_token');
+  if (t && remoto) fetch(API_URL, { method: 'POST', body: JSON.stringify({ token: t, action: 'cerrarSesion', payload: {} }) }).catch(() => {});
+  showLogin(msg);
+}
+function showLogin(msg, paso, email) {
+  email = email || S.loginEmail || localStorage.getItem('cc_email') || '';
+  $('#app').innerHTML = `<div class="card login"><h2>Caja Chica</h2><p class="mut">Control de fondo fijo · creación, reintegro y liquidación</p>
+    ${msg ? `<div class="alert">${esc(msg)}</div>` : ''}
+    ${paso === 2 ? `<p>Escribe el código de 6 dígitos que enviamos a <b>${esc(email)}</b>.</p>
+      <input id="l_cod" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="text-align:center;font-size:24px;letter-spacing:6px">
+      <p><button class="gold" onclick="entrar(this)">Entrar</button></p>
+      <p><a href="#" onclick="showLogin('', 1);return false">Usar otro correo o pedir otro código</a></p>`
+    : `<label style="text-align:left">Tu correo</label><input id="l_email" type="email" autocomplete="email" value="${esc(email)}" placeholder="correo@ejemplo.com">
+      <p><button class="gold" onclick="pedirCodigo(this)">Enviar código</button></p>`}
+    <p class="mut" style="margin-top:20px">Desarrollado por Control360</p></div>`;
+}
+function pedirCodigo(btn) {
+  accion(btn, async () => {
+    const email = $('#l_email').value.trim().toLowerCase();
+    const r = await pub('solicitarCodigo', { email });
+    S.loginEmail = email; localStorage.setItem('cc_email', email); showLogin(r.mensaje, 2, email);
+  });
+}
+function entrar(btn) {
+  accion(btn, async () => {
+    const r = await pub('verificarCodigo', { email: S.loginEmail, codigo: $('#l_cod').value });
+    S.token = r.token; localStorage.setItem('cc_token', r.token); await start();
+  });
+}
+async function start() {
+  try { S.boot = await api('bootstrap'); }
+  catch (e) { if (S.token) { $('#app').innerHTML = `<div class="card login"><div class="alert bad">${esc(e.error)}</div><button onclick="logout('', true)">Salir</button></div>`; } return; }
+  route();
+}
+
+/* ---------- estructura ---------- */
+function shell(html, activo) {
+  const b = S.boot, n = b.pendientes;
+  $('#app').innerHTML = `<header><div><b>Caja Chica</b><small>${esc(b.app.empresa)}</small></div>
+    <div class="row"><small>${esc(b.user.nombre)}</small><button onclick="logout('', true)">Salir</button></div></header>
+    <nav><a href="#/" class="${activo === 'i' ? 'on' : ''}">Mis fondos</a>
+    <a href="#/bandeja" class="${activo === 'b' ? 'on' : ''}">Pendientes${n ? `<span class="badge">${n}</span>` : ''}</a>
+    <a href="#/solicitudes" class="${activo === 's' ? 'on' : ''}">Solicitudes</a>
+    ${rol('custodio') ? `<a href="#/nuevo" class="${activo === 'n' ? 'on' : ''}">+ Nuevo fondo</a>` : ''}</nav>
+    <main>${html}</main><footer>Desarrollado por Control360 · v${esc(b.app.version)}</footer>`;
+  window.scrollTo(0, 0);
+}
+async function route() {
+  if (!S.boot) return;
+  const h = location.hash.replace(/^#\/?/, ''), [r, id] = h.split('/');
+  try {
+    if (r === 'bandeja') await vLista('pendientes', 'Pendientes de mi acción', 'b');
+    else if (r === 'solicitudes') await vLista('todas', 'Todas las solicitudes', 's');
+    else if (r === 'nuevo') vNuevoFondo();
+    else if (r === 'f') await vFondo(id);
+    else if (r === 'gasto') await vGasto(id);
+    else if (r === 'reintegro') await vSeleccion('Reintegro', id);
+    else if (r === 'liquidar') await vSeleccion('Liquidación', id);
+    else if (r === 'reenviar') await vSeleccion(null, null, id);
+    else if (r === 's') await vSolicitud(id);
+    else vInicio();
+  } catch (e) { if (S.token) shell(`<div class="alert bad">${esc(e.error || e.message)}</div><a class="btn ghost" href="#/">Volver</a>`); }
+}
+window.addEventListener('hashchange', route);
+
+/* ---------- inicio: fondos ---------- */
+function fondoCard(f, detalle) {
+  const pct = f.monto ? Math.min(100, Math.round(f.gastado / f.monto * 100)) : 0;
+  const cls = pct >= 85 ? 'd' : pct >= S.boot.app.umbral * 100 ? 'w' : '';
+  const miFondo = f.custodio === S.boot.user.email, activo = f.estado === 'Activo';
+  return `<div class="card"><div class="row between"><b>${esc(f.nombre)}</b>${chip(f.estado)}</div>
+    <div class="mut">${esc(f.id)} · ${esc(f.tipo)}${f.proyecto_cc ? ' · ' + esc(f.proyecto_cc) : ''}<br>Custodio: ${esc(f.custodio_nombre)} · Autoriza: ${esc(f.autorizante_nombre)}</div>
+    <div class="bar ${cls}"><i style="width:${pct}%"></i></div>
+    <div class="kpis"><div><b>${money(f.efectivo)}</b><span>Efectivo disponible</span></div><div><b>${money(f.registrados)}</b><span>Por reintegrar</span></div><div><b>${money(f.en_tramite)}</b><span>En trámite</span></div></div>
+    <div class="mut">Fondo fijo: ${money(f.monto)} · Límite por comprobante: ${f.limite_comprobante ? money(f.limite_comprobante) : 'sin límite'} · Usado ${pct}%</div>
+    ${f.alerta_reintegro && miFondo ? `<div class="alert">Ya usaste el ${pct}% del fondo. Solicita el reintegro para no quedarte sin efectivo.</div>` : ''}
+    <div class="row" style="margin-top:10px">
+      ${miFondo && activo ? `<a class="btn gold" href="#/gasto/${f.id}">+ Registrar gasto</a><a class="btn" href="#/reintegro/${f.id}">Reintegro</a><a class="btn ghost" href="#/liquidar/${f.id}">Liquidar</a>` : ''}
+      ${detalle ? '' : `<a class="btn ghost" href="#/f/${f.id}">Ver detalle</a>`}</div></div>`;
+}
+function vInicio() {
+  const fs = S.boot.fondos;
+  shell(`<h2>Mis fondos</h2>${fs.length ? fs.map(f => fondoCard(f)).join('') : `<div class="card mut">Aún no hay fondos. ${rol('custodio') ? 'Crea el primero con “+ Nuevo fondo”.' : ''}</div>`}`, 'i');
+}
+
+/* ---------- listas ---------- */
+async function vLista(vista, titulo, tab) {
+  shell('<p class="mut">Cargando…</p>', tab);
+  const l = await api('listSolicitudes', { vista });
+  shell(`<h2>${esc(titulo)}</h2><div class="card">${l.length ? l.map(s => `<a class="li ${s.accion ? 'act' : ''}" href="#/s/${s.id}">
+    <div><b>${esc(s.id)} · ${esc(s.tipo)}</b> — ${money(s.monto)}<br><span class="mut">${esc(s.fondo_nombre)} · ${esc(s.solicitante_nombre)} · ${esc(s.fecha)}</span>${s.accion ? '<br><b style="color:var(--warn)">Requiere tu acción</b>' : ''}</div>
+    <div>${chip(s.estado)}</div></a>`).join('') : '<span class="mut">Nada por aquí.</span>'}</div>`, tab);
+}
+
+/* ---------- detalle de fondo ---------- */
+async function vFondo(id) {
+  shell('<p class="mut">Cargando…</p>', 'i');
+  const d = await api('getFondo', { id }), f = d.fondo, mio = f.custodio === S.boot.user.email;
+  shell(`${fondoCard(f, true)}<h3>Comprobantes</h3><div class="card tw"><table><tr><th>Fecha</th><th>Proveedor / concepto</th><th class="n">Total</th><th>Estado</th><th></th></tr>
+    ${d.gastos.map(g => `<tr><td>${esc(g.fecha)}</td><td><b>${esc(g.proveedor)}</b><br>${esc(g.concepto)}<br><span class="mut">${esc(g.tipo_doc)} ${esc(g.numero_doc)} · ${esc(g.categoria)}</span>${g.alertas ? `<br><span style="color:var(--warn)">⚠ ${esc(g.alertas)}</span>` : ''}</td>
+    <td class="n">${money(g.total)}</td><td>${chip(g.estado)}${g.solicitud_id ? `<br><a href="#/s/${g.solicitud_id}">${esc(g.solicitud_id)}</a>` : ''}</td>
+    <td>${g.tiene_archivo ? `<button class="sm ghost" onclick="verArchivo('${g.id}','archivo')">Soporte</button>` : ''}${g.tiene_dte ? `<br><button class="sm ghost" onclick="verArchivo('${g.id}','dte')">DTE</button>` : ''}
+    ${mio && g.estado === 'Registrado' ? `<br><button class="sm red" onclick="borrarGasto(this,'${g.id}')">Eliminar</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="mut">Sin comprobantes.</td></tr>'}</table></div>
+    <h3>Solicitudes del fondo</h3><div class="card">${d.solicitudes.map(s => `<a class="li" href="#/s/${s.id}"><div><b>${esc(s.id)} · ${esc(s.tipo)}</b> — ${money(s.monto)}<br><span class="mut">${esc(s.fecha)}</span></div>${chip(s.estado)}</a>`).join('') || '<span class="mut">Sin solicitudes.</span>'}</div>`, 'i');
+}
+function borrarGasto(btn, id) { if (!confirm('¿Eliminar este comprobante?')) return; accion(btn, async () => { await api('eliminarGasto', { id }); S.boot = await api('bootstrap'); toast('Comprobante eliminado', 'ok'); route(); }); }
+
+/* ---------- nuevo fondo ---------- */
+function vNuevoFondo() {
+  const auts = S.boot.autorizantes.filter(a => a.email !== S.boot.user.email);
+  shell(`<h2>Solicitar creación de fondo</h2><div class="card">
+    <div class="grid2"><div><label>Tipo</label><select id="nf_tipo"><option>Proyecto</option><option>Oficina</option></select></div>
+    <div><label>Proyecto / centro de costo</label><input id="nf_cc" placeholder="Ej. PRY-014"></div></div>
+    <label>Nombre del fondo</label><input id="nf_nombre" placeholder="Ej. Proyecto Residencial Los Pinos">
+    <div class="grid2"><div><label>Monto del fondo (USD)</label><input id="nf_monto" type="number" step="0.01" inputmode="decimal"></div>
+    <div><label>Límite por comprobante (USD)</label><input id="nf_lim" type="number" step="0.01" inputmode="decimal" placeholder="0 = sin límite"></div></div>
+    <label>Autorizante</label><select id="nf_aut">${auts.map(a => `<option value="${esc(a.email)}">${esc(a.nombre)}</option>`).join('')}</select>
+    <label>Justificación</label><textarea id="nf_just" placeholder="¿Para qué se usará el fondo?"></textarea>
+    <p class="mut">Tú serás el custodio. Se avisará por correo a contabilidad y al autorizante.</p>
+    <button class="gold" onclick="enviarFondo(this)">Enviar solicitud</button></div>`, 'n');
+}
+function enviarFondo(btn) {
+  accion(btn, async () => {
+    const r = await api('crearFondo', { tipo: $('#nf_tipo').value, proyecto_cc: $('#nf_cc').value, nombre: $('#nf_nombre').value, monto: $('#nf_monto').value,
+      limite_comprobante: $('#nf_lim').value || 0, autorizante: $('#nf_aut').value, justificacion: $('#nf_just').value });
+    S.boot = await api('bootstrap'); toast('Solicitud ' + r.solicitud_id + ' enviada', 'ok'); location.hash = '#/s/' + r.solicitud_id;
+  });
+}
+
+/* ---------- registrar gasto ---------- */
+let DTE = null;
+async function vGasto(fid) {
+  const f = S.boot.fondos.find(x => x.id === fid);
+  if (!f) throw { error: 'Fondo no encontrado.' };
+  DTE = null;
+  shell(`<h2>Registrar gasto</h2><div class="alert">${esc(f.nombre)} · Efectivo disponible <b>${money(f.efectivo)}</b>${f.limite_comprobante ? ` · Límite por comprobante ${money(f.limite_comprobante)}` : ''}</div>
+    <div class="card">
+    <label>Factura electrónica (archivo .json del DTE) — opcional</label><input id="g_dte" type="file" accept=".json,application/json" onchange="cargarDte(this)">
+    <div id="g_dte_msg" class="mut"></div>
+    <label>Foto o PDF del comprobante</label><input id="g_arch" type="file" accept="image/*,application/pdf">
+    <div class="grid2"><div><label>Tipo de documento</label><select id="g_tipo" onchange="sugerirIva()">${S.boot.tiposDoc.map(t => `<option value="${t.codigo}">${esc(t.nombre)}</option>`).join('')}</select></div>
+    <div><label>Fecha del comprobante</label><input id="g_fecha" type="date" max="${hoy()}" value="${hoy()}"></div></div>
+    <div class="grid2"><div><label>N.º de documento</label><input id="g_num"></div><div><label>NIT / NRC del proveedor</label><input id="g_nit"></div></div>
+    <label>Proveedor</label><input id="g_prov">
+    <label>Concepto (qué se compró y para qué)</label><input id="g_conc">
+    <label>Categoría</label><select id="g_cat">${S.boot.categorias.map(c => `<option>${esc(c)}</option>`).join('')}</select>
+    <div class="grid2"><div><label>Total (USD)</label><input id="g_total" type="number" step="0.01" inputmode="decimal" oninput="sugerirIva()"></div>
+    <div><label>IVA incluido (USD)</label><input id="g_iva" type="number" step="0.01" inputmode="decimal" value="0" oninput="calcSub()"></div></div>
+    <p class="mut">Subtotal: <b id="g_sub">$0.00</b></p>
+    <button class="gold" onclick="guardarGasto(this,'${fid}')">Guardar comprobante</button></div>`, 'i');
+}
+function calcSub() { $('#g_sub').textContent = money(r2(Number($('#g_total').value || 0) - Number($('#g_iva').value || 0))); }
+function sugerirIva() {
+  const t = $('#g_tipo').value, tot = Number($('#g_total').value || 0);
+  if (!DTE) $('#g_iva').value = (t === 'CCF' || t === 'FAC') ? r2(tot / 1.13 * 0.13) : 0;
+  calcSub();
+}
+async function cargarDte(inp) {
+  const f = inp.files[0]; const msg = $('#g_dte_msg');
+  if (!f) { DTE = null; ['g_tipo', 'g_fecha', 'g_num', 'g_nit', 'g_prov', 'g_total', 'g_iva'].forEach(i => $('#' + i).removeAttribute('readonly')); msg.textContent = ''; return; }
+  try {
+    const txt = await f.text(); const d = await api('leerDte', { dte_json: txt }); DTE = txt;
+    $('#g_tipo').value = d.tipo_doc; $('#g_fecha').value = d.fecha; $('#g_num').value = d.numero_doc; $('#g_nit').value = d.nit; $('#g_prov').value = d.proveedor;
+    $('#g_total').value = d.total; $('#g_iva').value = d.iva; calcSub();
+    ['g_fecha', 'g_num', 'g_nit', 'g_prov', 'g_total', 'g_iva'].forEach(i => $('#' + i).setAttribute('readonly', ''));
+    msg.innerHTML = '✔ Datos leídos del DTE (no editables).' + d.alertas.map(a => `<br><b style="color:var(--warn)">⚠ ${esc(a)}</b>`).join('');
+  } catch (e) { inp.value = ''; DTE = null; msg.textContent = ''; toast(e.error || e.message, 'bad'); }
+}
+function guardarGasto(btn, fid) {
+  accion(btn, async () => {
+    const archivo = await leerArchivo($('#g_arch').files[0]);
+    const total = r2($('#g_total').value), iva = r2($('#g_iva').value || 0);
+    const r = await api('registrarGasto', { fondo_id: fid, dte_json: DTE || undefined, archivo, tipo_doc: $('#g_tipo').value, fecha: $('#g_fecha').value, numero_doc: $('#g_num').value,
+      nit: $('#g_nit').value, proveedor: $('#g_prov').value, concepto: $('#g_conc').value, categoria: $('#g_cat').value, total, iva, subtotal: r2(total - iva) });
+    S.boot = await api('bootstrap');
+    toast(r.alertas.length ? 'Guardado con alerta: ' + r.alertas.join(' | ') : 'Comprobante guardado', r.alertas.length ? '' : 'ok');
+    location.hash = '#/f/' + fid;
+  });
+}
+
+/* ---------- selección de gastos: reintegro / liquidación / reenvío ---------- */
+let SEL = null;
+async function vSeleccion(tipo, fid, solId) {
+  shell('<p class="mut">Cargando…</p>', 'i');
+  let sol = null;
+  if (solId) { const s = await api('getSolicitud', { id: solId }); sol = s.solicitud; tipo = sol.tipo; fid = sol.fondo_id; if (tipo === 'Creación') { location.hash = '#/s/' + solId; return; } }
+  const d = await api('getFondo', { id: fid }), f = d.fondo;
+  const disp = d.gastos.filter(g => g.estado === 'Registrado' || (sol && g.solicitud_id === sol.id)).reverse();
+  const liq = tipo === 'Liquidación';
+  SEL = { tipo, fid, sol, f, disp, liq };
+  shell(`<h2>${sol ? 'Corregir y reenviar · ' + esc(sol.id) : liq ? 'Liquidar fondo' : 'Solicitar reintegro'}</h2>
+    ${sol && sol.comentario ? `<div class="alert bad"><b>Observación:</b> ${esc(sol.comentario)}</div>` : ''}
+    <div class="alert">${esc(f.nombre)} · Fondo ${money(f.monto)}${liq ? '. Se incluyen <b>todos</b> los comprobantes pendientes y se devuelve el efectivo restante.' : '. Selecciona los comprobantes a reintegrar.'}</div>
+    <div class="card">${disp.length ? disp.map(g => `<label class="row" style="font-weight:400;margin:0;padding:8px 0;border-bottom:1px solid var(--line)">
+      <input type="checkbox" class="sel" value="${g.id}" ${(liq || !sol || g.solicitud_id === sol.id) ? 'checked' : ''} ${liq ? 'disabled' : ''} onchange="calcSel()">
+      <span style="flex:1"><b>${esc(g.proveedor)}</b> — ${esc(g.concepto)}<br><span class="mut">${esc(g.fecha)} · ${esc(g.tipo_doc)} ${esc(g.numero_doc)}</span></span><b>${money(g.total)}</b></label>`).join('') : '<span class="mut">No hay comprobantes pendientes.</span>'}
+      <p class="right">Total comprobantes: <b id="s_tot">$0.00</b></p></div>
+    ${liq ? `<div class="card"><label>Efectivo que devuelves (USD)</label><input id="s_dev" type="number" step="0.01" inputmode="decimal" oninput="calcSel()" value="${sol ? sol.efectivo_devuelto : ''}">
+      <p>Efectivo esperado: <b id="s_esp">$0.00</b> · Diferencia: <b id="s_dif">$0.00</b></p>
+      <div id="s_bol"><label>Foto/PDF de la boleta de depósito</label><input id="s_bfile" type="file" accept="image/*,application/pdf">${sol && sol.tiene_boleta ? `<p class="mut">Ya hay una boleta cargada. Sube otra solo si debes reemplazarla.</p>` : ''}</div></div>` : ''}
+    <div class="card"><label id="s_jl">Comentario / justificación ${liq ? '(obligatoria si hay diferencia)' : '(opcional)'}</label><textarea id="s_just">${sol ? esc(sol.justificacion) : ''}</textarea>
+      <button class="gold" onclick="enviarSeleccion(this)" style="margin-top:12px">${sol ? 'Reenviar' : 'Enviar solicitud'}</button></div>`, 'i');
+  calcSel();
+}
+function calcSel() {
+  const ids = [...document.querySelectorAll('.sel:checked')].map(x => x.value);
+  const tot = r2(SEL.disp.filter(g => ids.includes(g.id)).reduce((a, g) => a + g.total, 0));
+  $('#s_tot').textContent = money(tot);
+  if (SEL.liq) {
+    const dev = Number($('#s_dev').value || 0), esp = r2(SEL.f.monto - tot), dif = r2(dev - esp);
+    $('#s_esp').textContent = money(esp); $('#s_dif').textContent = money(dif); $('#s_dif').style.color = Math.abs(dif) > 0.01 ? 'var(--bad)' : 'var(--ok)';
+    $('#s_bol').style.display = dev > 0 ? '' : 'none';
+  }
+}
+function enviarSeleccion(btn) {
+  accion(btn, async () => {
+    const gasto_ids = [...document.querySelectorAll('.sel:checked')].map(x => x.value) , p = { gasto_ids, justificacion: $('#s_just').value };
+    if (SEL.liq) { p.efectivo_devuelto = $('#s_dev').value || 0; p.boleta = await leerArchivo($('#s_bfile') && $('#s_bfile').files[0]) || undefined; }
+    let r;
+    if (SEL.sol) { r = await api('reenviar', Object.assign(p, { id: SEL.sol.id })); r = { solicitud_id: SEL.sol.id }; }
+    else r = await api(SEL.liq ? 'solicitarLiquidacion' : 'solicitarReintegro', Object.assign(p, { fondo_id: SEL.fid }));
+    S.boot = await api('bootstrap'); toast('Solicitud ' + r.solicitud_id + ' enviada', 'ok'); location.hash = '#/s/' + r.solicitud_id;
+  });
+}
+
+/* ---------- detalle de solicitud ---------- */
+let CUR = null;
+async function vSolicitud(id) {
+  shell('<p class="mut">Cargando…</p>', 'b');
+  const d = await api('getSolicitud', { id }); CUR = d;
+  const s = d.solicitud, f = d.fondo, a = d.acciones;
+  const gastos = d.gastos.length ? `<h3>Comprobantes (${d.gastos.length})</h3><div class="card tw"><table><tr><th>Fecha</th><th>Proveedor / concepto</th><th>Doc.</th><th class="n">Total</th><th></th></tr>
+    ${d.gastos.map(g => `<tr><td>${esc(g.fecha)}</td><td><b>${esc(g.proveedor)}</b><br>${esc(g.concepto)}<br><span class="mut">${esc(g.categoria)}</span>${g.alertas ? `<br><span style="color:var(--warn)">⚠ ${esc(g.alertas)}</span>` : ''}</td>
+    <td>${esc(g.tipo_doc)}<br>${esc(g.numero_doc)}</td><td class="n">${money(g.total)}${g.iva ? `<br><span class="mut">IVA ${money(g.iva)}</span>` : ''}</td>
+    <td>${g.tiene_archivo ? `<button class="sm ghost" onclick="verArchivo('${g.id}','archivo')">Soporte</button>` : ''}${g.tiene_dte ? `<br><button class="sm ghost" onclick="verArchivo('${g.id}','dte')">DTE</button>` : ''}</td></tr>`).join('')}
+    <tr><td colspan="3"><b>Total</b></td><td class="n"><b>${money(s.monto)}</b></td><td></td></tr></table></div>` : '';
+  const liq = s.tipo === 'Liquidación' ? `<div class="card"><b>Cierre de efectivo</b><br>Esperado: ${money(d.esperado)} · Devuelto: ${money(s.efectivo_devuelto)} · Diferencia: <b style="color:${Math.abs(s.diferencia) > 0.01 ? 'var(--bad)' : 'var(--ok)'}">${money(s.diferencia)}</b>
+    ${s.tiene_boleta ? ` · <button class="sm ghost" onclick="verArchivo('${s.id}','boleta')">Boleta de depósito</button>` : ''}</div>` : '';
+  const asiento = d.asiento ? `<h3>Asiento sugerido para Odoo</h3><div class="card tw"><table><tr><th>Cuenta</th><th>Detalle</th><th class="n">Debe</th><th class="n">Haber</th></tr>
+    ${d.asiento.lineas.map(l => `<tr><td>${esc(l.cuenta)}</td><td>${esc(l.nota)}</td><td class="n">${l.debe ? money(l.debe) : ''}</td><td class="n">${l.haber ? money(l.haber) : ''}</td></tr>`).join('')}
+    <tr><td colspan="2"><b>Totales</b> ${d.asiento.cuadra ? '' : '<span style="color:var(--bad)">(no cuadra)</span>'}</td><td class="n"><b>${money(d.asiento.debe)}</b></td><td class="n"><b>${money(d.asiento.haber)}</b></td></tr></table>
+    ${d.gastos.length ? `<p><button class="ghost sm" onclick="bajarCsv()">Descargar detalle (CSV)</button></p>` : ''}</div>` : '';
+  const dec = (t) => `<label>Comentario ${t === 'obs' ? '(obligatorio al observar o denegar)' : ''}</label><textarea id="d_com"></textarea>`;
+  let panel = '';
+  if (a.revisar) panel = `<h3>Revisión contable</h3><div class="card">${dec('obs')}<div class="row" style="margin-top:10px"><button class="green" onclick="decidir(this,'revisarContable','pasar')">Pasar a autorización</button><button class="orange" onclick="decidir(this,'revisarContable','observar')">Observar</button><button class="red" onclick="decidir(this,'revisarContable','denegar')">Denegar</button></div></div>`;
+  if (a.autorizar) panel = `<h3>Tu decisión como autorizante</h3><div class="card">${dec('obs')}<div class="row" style="margin-top:10px"><button class="green" onclick="decidir(this,'decidirAutorizacion','autorizar')">Autorizar</button><button class="orange" onclick="decidir(this,'decidirAutorizacion','observar')">Observar</button><button class="red" onclick="decidir(this,'decidirAutorizacion','denegar')">Denegar</button></div></div>`;
+  if (a.odoo) panel = `<h3>Registro en Odoo</h3><div class="card"><p class="mut">Registra el asiento en Odoo y anota aquí la referencia para cerrar el trámite.</p>
+    <div class="grid2"><div><label>Referencia / n.º de documento en Odoo</label><input id="o_ref"></div><div><label>Fecha de registro</label><input id="o_fecha" type="date" max="${hoy()}" value="${hoy()}"></div></div>
+    ${s.tipo === 'Creación' ? `<label>Fecha de entrega del efectivo al custodio</label><input id="o_ent" type="date" max="${hoy()}" value="${hoy()}">` : ''}
+    <button class="green" style="margin-top:12px" onclick="registrarOdoo(this)">Marcar como registrada en Odoo</button></div>`;
+  if (a.reenviar) panel = s.tipo === 'Creación'
+    ? `<h3>Corregir y reenviar</h3><div class="card"><label>Monto del fondo (USD)</label><input id="r_monto" type="number" step="0.01" value="${s.monto}"><label>Justificación</label><textarea id="r_just">${esc(s.justificacion)}</textarea><button class="gold" style="margin-top:12px" onclick="reenviarCreacion(this)">Reenviar</button></div>`
+    : `<div class="card"><a class="btn gold" href="#/reenviar/${s.id}">Corregir comprobantes y reenviar</a></div>`;
+  shell(`<div class="row between"><h2>${esc(s.id)} · ${esc(s.tipo)}</h2>${chip(s.estado)}</div>
+    ${s.estado === 'Observada' && s.comentario ? `<div class="alert bad"><b>Observación:</b> ${esc(s.comentario)}</div>` : ''}
+    <div class="card"><div class="grid2"><div><span class="mut">Fondo</span><br><a href="#/f/${f.id}"><b>${esc(f.nombre)}</b></a><br><span class="mut">${esc(f.id)} · ${esc(f.tipo)}</span></div>
+    <div><span class="mut">Monto</span><br><b style="font-size:20px">${money(s.monto)}</b></div>
+    <div><span class="mut">Solicitante</span><br>${esc(s.solicitante_nombre)} · ${esc(s.fecha)}</div><div><span class="mut">Autoriza</span><br>${esc(f.autorizante_nombre)}</div></div>
+    ${s.justificacion ? `<p><span class="mut">Justificación:</span> ${esc(s.justificacion)}</p>` : ''}
+    ${s.ref_odoo ? `<p><span class="mut">Odoo:</span> <b>${esc(s.ref_odoo)}</b> (${esc(s.fecha_odoo)})</p>` : ''}</div>
+    ${panel}${gastos}${liq}${asiento}
+    <h3>Historial</h3><div class="card tl">${d.bitacora.map(b => `<div><b>${esc(b.accion)}</b> · ${esc(b.usuario)}<br><span class="mut">${esc(b.fecha)}</span>${b.detalle ? `<br>${esc(b.detalle)}` : ''}</div>`).join('') || '<span class="mut">Sin movimientos.</span>'}</div>`, a.revisar || a.autorizar || a.odoo ? 'b' : 's');
+}
+function decidir(btn, act, decision) {
+  const com = $('#d_com').value.trim();
+  if (decision === 'denegar' && !confirm('¿Denegar esta solicitud? Es una decisión final.')) return;
+  accion(btn, async () => { await api(act, { id: CUR.solicitud.id, decision, comentario: com }); S.boot = await api('bootstrap'); toast('Listo', 'ok'); route(); });
+}
+function registrarOdoo(btn) {
+  accion(btn, async () => {
+    await api('registrarOdoo', { id: CUR.solicitud.id, ref_odoo: $('#o_ref').value, fecha_odoo: $('#o_fecha').value, fecha_entrega: $('#o_ent') ? $('#o_ent').value : undefined });
+    S.boot = await api('bootstrap'); toast('Registrada en Odoo', 'ok'); route();
+  });
+}
+function reenviarCreacion(btn) {
+  accion(btn, async () => { await api('reenviar', { id: CUR.solicitud.id, monto: $('#r_monto').value, justificacion: $('#r_just').value }); S.boot = await api('bootstrap'); toast('Reenviada', 'ok'); route(); });
+}
+function bajarCsv() {
+  const d = CUR, f = d.fondo;
+  csv(d.solicitud.id + '_detalle.csv', [['Solicitud', 'Fondo', 'Fecha', 'Tipo doc', 'N.º doc', 'Proveedor', 'NIT', 'Concepto', 'Categoría', 'Subtotal', 'IVA', 'Total', 'Origen']]
+    .concat(d.gastos.map(g => [d.solicitud.id, f.id + ' ' + f.nombre, g.fecha, g.tipo_doc, g.numero_doc, g.proveedor, g.nit, g.concepto, g.categoria, g.subtotal, g.iva, g.total, g.origen])));
+}
+
+/* ---------- arranque ---------- */
+if (S.token) start(); else showLogin();
+</script>
+</body>
+</html>
